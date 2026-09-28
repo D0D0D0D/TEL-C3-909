@@ -1,0 +1,26 @@
+# Agent Manifest — AgentRegistry entry point
+# AgentRegistry reads every key below at ROOT level; do not nest under `agent:`.
+id: "TEL-C3-909"
+name: "MonitoringAlertFirstTriageAgent"
+namespace: "tel"
+version: "1.0.0"
+enabled: true
+category: "Cat 3"
+generation_mode: "llm"
+industry: "TEL"
+
+# Opaque compatibility metadata. Runtime tuning lives in config/config.yaml.
+base_type: "AutonomousBaseGraph"
+
+# Entry point — single dotted import path (module.Class).
+class: "src.graph.graph.MonitoringAlertFirstTriageAgent"
+
+# Security
+required_trust_level: "VERIFIED_EXTERNAL"
+requires:
+  secrets:
+    - "DIAG_READONLY_CREDENTIALS"  # read-only connection info for diagnostic targets
+    - "CHATOPS_WEBHOOK_URL"        # incremental-report destination
+    - "ANTHROPIC_API_KEY"          # LLM client construction (think + runbook conversion)
+  extras:
+    - "anthropic"

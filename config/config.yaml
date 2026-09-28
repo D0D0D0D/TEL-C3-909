@@ -1,0 +1,41 @@
+# Runtime configuration (docs/02_design.md §config/agent.yaml 主要キー設計値)
+#
+# ⚠ budget_usd / max_iterations / confidence_threshold are initial values
+# that template users are expected to tune to their own environment
+# (decision-tree depth, alert volume, cost policy) — see docs/02 for the
+# (rough, PoC-pending) rationale (2026-07-06 decision).
+budget_usd: 1.50               # REQUIRED — hard LLM cost ceiling per invocation.
+                                # Includes runtime runbook->DSL conversion LLM cost.
+                                # Rough basis: 1-2 conversion calls (~$0.1-0.3) +
+                                # think loop up to max_iterations=24 (~cents/call),
+                                # plus safety margin. Tune after PoC measurement.
+max_iterations: 24              # decision-tree depth + retry margin
+confidence_threshold: 0.75      # think's convergence signal (record_hypothesis)
+runbook_source:
+  mode: "cached"                 # per_invocation (always fetch+convert) /
+                                  # cached (doc_hash-keyed conversion cache;
+                                  # auto-invalidates when the document changes)
+  location: ""                   # customer-specific (URL or path)
+runbook_conversion:
+  enabled: true                  # runtime LLM conversion of unstructured runbooks
+                                  # (false = accept only pre-confirmed valid DSL)
+  cache_max_entries: 64          # conversion cache size (doc_hash keyed)
+target_allowlist: []             # diagnosable destinations (host:port).
+                                  # empty = degraded mode (no diagnostics performed).
+                                  # Governance: a target that cannot be issued a
+                                  # read-only credential MUST NOT be added here
+                                  # (see docs/07_operation_guide.md).
+reporting:
+  enabled: true
+  webhook_secret_key: "CHATOPS_WEBHOOK_URL"  # report destination URL is secrets-sourced
+  min_interval_seconds: 0        # incremental-report cadence (0 = every observation)
+output:
+  language: "ja"
+input_adapters: ["alertmanager", "datadog", "pagerduty", "generic"]
+
+memory_enabled: false              # v0 — cross-invocation correlation sharing is a
+                                    # future option (memory_enabled + correlation_key)
+hitl:
+  enabled: false                   # no runtime HITL — all actions are read-only with
+                                    # no approval-worthy operation; target_allowlist
+                                    # changes are approved via Git MR review instead
